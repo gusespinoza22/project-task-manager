@@ -112,9 +112,6 @@ select:focus {
 .rich-editor p {
   margin: 4px 0;
 }
-.rich-editor br:only-child {
-  display: none;
-}
 
 /* Rich text rendered read-only (task list preview) */
 .rich-content ul,

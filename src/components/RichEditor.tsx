@@ -34,11 +34,28 @@ function ToolBtn({
   )
 }
 
-export function RichEditor({ value, onChange, placeholder = 'Detalles, contextoâ€¦', minHeight = 140 }: Props) {
+/** Strip tags + nbsp to check true emptiness */
+function isHtmlEmpty(html: string) {
+  return !html || html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim() === ''
+}
+
+export function RichEditor({
+  value,
+  onChange,
+  placeholder = 'Detalles, contextoâ€¦',
+  minHeight = 140,
+}: Props) {
   const editorRef = useRef<HTMLDivElement>(null)
   const focusedRef = useRef(false)
 
-  // Sync value in only when the field is not focused (external change)
+  // On mount: tell the browser to use <br> for Enter (not <div>).
+  // This makes the stored HTML consistent across Chrome / Firefox / Safari.
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    document.execCommand('defaultParagraphSeparator', false, 'br')
+  }, [])
+
+  // Sync value into DOM only when the field is not focused (external/initial load)
   useEffect(() => {
     const el = editorRef.current
     if (!el || focusedRef.current) return
@@ -54,14 +71,30 @@ export function RichEditor({ value, onChange, placeholder = 'Detalles, contextoâ
     onChange(editorRef.current?.innerHTML ?? '')
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const mod = e.metaKey || e.ctrlKey
-    if (mod && e.key === 'b') { e.preventDefault(); exec('bold') }
-    if (mod && e.key === 'i') { e.preventDefault(); exec('italic') }
-    if (mod && e.key === 'u') { e.preventDefault(); exec('underline') }
+
+    if (mod && e.key === 'b') { e.preventDefault(); exec('bold'); return }
+    if (mod && e.key === 'i') { e.preventDefault(); exec('italic'); return }
+    if (mod && e.key === 'u') { e.preventDefault(); exec('underline'); return }
+
+    // Normalise Enter â†’ <br> outside of lists so the HTML is always <br>-based
+    // (inside lists the browser creates <li> items â€” let it do that naturally)
+    if (e.key === 'Enter' && !mod && !e.shiftKey) {
+      const sel = window.getSelection()
+      const inList = sel?.anchorNode?.parentElement?.closest('ul, ol')
+      if (!inList) {
+        e.preventDefault()
+        // insertHTML puts a <br> at the caret. We add a zero-width space after so
+        // the cursor visually lands on the new line when pressing Enter at end-of-content.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
+        document.execCommand('insertHTML', false, '<br>â€‹')
+        onChange(editorRef.current?.innerHTML ?? '')
+      }
+    }
   }
 
-  const isEmpty = !value || value.replace(/<[^>]*>/g, '').trim() === ''
+  const empty = isHtmlEmpty(value)
 
   return (
     <div>
@@ -82,11 +115,11 @@ export function RichEditor({ value, onChange, placeholder = 'Detalles, contextoâ
         {/* Unordered list */}
         <ToolBtn title="Lista con viÃ±etas" onActivate={() => exec('insertUnorderedList')}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-            <circle cx="2.5" cy="4" r="1.2" fill="currentColor" stroke="none"/>
-            <circle cx="2.5" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="2.5" cy="4"  r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="2.5" cy="8"  r="1.2" fill="currentColor" stroke="none"/>
             <circle cx="2.5" cy="12" r="1.2" fill="currentColor" stroke="none"/>
-            <line x1="6" y1="4" x2="15" y2="4"/>
-            <line x1="6" y1="8" x2="15" y2="8"/>
+            <line x1="6" y1="4"  x2="15" y2="4"/>
+            <line x1="6" y1="8"  x2="15" y2="8"/>
             <line x1="6" y1="12" x2="15" y2="12"/>
           </svg>
         </ToolBtn>
@@ -94,18 +127,17 @@ export function RichEditor({ value, onChange, placeholder = 'Detalles, contextoâ
         {/* Ordered list */}
         <ToolBtn title="Lista numerada" onActivate={() => exec('insertOrderedList')}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" stroke="none">
-            <text x="0" y="5.5" style={{ fontSize: '5.5px', fontWeight: 700, fontFamily: 'monospace' }}>1.</text>
-            <text x="0" y="10" style={{ fontSize: '5.5px', fontWeight: 700, fontFamily: 'monospace' }}>2.</text>
+            <text x="0" y="5.5"  style={{ fontSize: '5.5px', fontWeight: 700, fontFamily: 'monospace' }}>1.</text>
+            <text x="0" y="10"   style={{ fontSize: '5.5px', fontWeight: 700, fontFamily: 'monospace' }}>2.</text>
             <text x="0" y="14.5" style={{ fontSize: '5.5px', fontWeight: 700, fontFamily: 'monospace' }}>3.</text>
-            <line x1="7" y1="4" x2="16" y2="4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            <line x1="7" y1="8.5" x2="16" y2="8.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            <line x1="7" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            <line x1="7" y1="4"    x2="16" y2="4"    stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            <line x1="7" y1="8.5"  x2="16" y2="8.5"  stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            <line x1="7" y1="13"   x2="16" y2="13"   stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
           </svg>
         </ToolBtn>
 
         <div style={css('width:1px;height:18px;background:#DDD3C2;margin:0 3px;flex-shrink:0')} />
 
-        {/* Clear formatting */}
         <ToolBtn title="Quitar formato" onActivate={() => exec('removeFormat')}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 7V4h16v3"/>
@@ -120,9 +152,9 @@ export function RichEditor({ value, onChange, placeholder = 'Detalles, contextoâ
         </span>
       </div>
 
-      {/* Editable area with placeholder */}
+      {/* Editable area */}
       <div style={{ position: 'relative' }}>
-        {isEmpty && (
+        {empty && (
           <div
             style={{
               position: 'absolute',
