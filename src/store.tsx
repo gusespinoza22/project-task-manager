@@ -251,7 +251,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           lastMoved: 0,
           x: newTaskX,
           y: newTaskY,
-          desc: f.desc.trim() || undefined,
+          desc: f.desc.replace(/<[^>]*>/g, '').trim() ? f.desc : undefined,
           imageDataUrl: f.imageDataUrl || undefined,
         }
 

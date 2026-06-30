@@ -83,3 +83,57 @@ select:focus {
   outline: 2px solid #c75d3c55;
   outline-offset: 1px;
 }
+
+/* Rich text editor — contenteditable */
+.rich-editor:focus {
+  border-color: #A89B86 !important;
+  outline: none;
+}
+.rich-editor ul,
+.rich-editor ol {
+  margin: 5px 0 5px 22px;
+  padding: 0;
+}
+.rich-editor li {
+  margin: 3px 0;
+  line-height: 1.55;
+}
+.rich-editor b,
+.rich-editor strong {
+  font-weight: 700;
+}
+.rich-editor i,
+.rich-editor em {
+  font-style: italic;
+}
+.rich-editor u {
+  text-decoration: underline;
+}
+.rich-editor p {
+  margin: 4px 0;
+}
+.rich-editor br:only-child {
+  display: none;
+}
+
+/* Rich text rendered read-only (task list preview) */
+.rich-content ul,
+.rich-content ol {
+  margin: 3px 0 3px 18px;
+  padding: 0;
+}
+.rich-content li {
+  margin: 1px 0;
+  line-height: 1.5;
+}
+.rich-content b,
+.rich-content strong {
+  font-weight: 700;
+}
+.rich-content i,
+.rich-content em {
+  font-style: italic;
+}
+.rich-content p {
+  margin: 2px 0;
+}

@@ -2,6 +2,21 @@ import { useStore } from '../store'
 import { PALETTE, PROJECT_NAV, QMETA } from '../constants'
 import { assigneeStyle, css, eff, hexTint, isStalled } from '../logic'
 
+const TAIL_MAX = 220
+
+/** Like `tail`: returns the last N plain-text chars of an HTML string.
+ *  When truncated, returns plain text tail + a truncated flag. */
+function descTail(html: string): { content: string; truncated: boolean; isHtml: boolean } {
+  const plain = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  if (plain.length <= TAIL_MAX) {
+    return { content: html, truncated: false, isHtml: true }
+  }
+  // Slice from the end; avoid cutting mid-word
+  const raw = plain.slice(-TAIL_MAX)
+  const tail = raw.replace(/^\S+\s/, '').trimStart()
+  return { content: tail, truncated: true, isHtml: false }
+}
+
 export function ProjectDetail({ isMobile }: { isMobile: boolean }) {
   const {
     data,
@@ -213,11 +228,24 @@ export function ProjectDetail({ isMobile }: { isMobile: boolean }) {
                           </span>
                         )}
                       </div>
-                      {t.desc && (
-                        <p style={css('margin:6px 0 0;font-size:13px;color:#7A7060;line-height:1.5;white-space:pre-wrap')}>
-                          {t.desc}
-                        </p>
-                      )}
+                      {t.desc && (() => {
+                        const { content, truncated, isHtml } = descTail(t.desc)
+                        return (
+                          <div style={css('margin:6px 0 0;font-size:13px;color:#7A7060;line-height:1.55')}>
+                            {truncated && (
+                              <span style={css("font:600 11px 'JetBrains Mono';color:#BDB5A8;margin-right:4px")}>…</span>
+                            )}
+                            {isHtml ? (
+                              <span
+                                className="rich-content"
+                                dangerouslySetInnerHTML={{ __html: content }}
+                              />
+                            ) : (
+                              <span>{content}</span>
+                            )}
+                          </div>
+                        )
+                      })()}
                       {t.imageDataUrl && (
                         <img
                           src={t.imageDataUrl}

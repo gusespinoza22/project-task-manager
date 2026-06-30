@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { QMETA } from '../constants'
 import { css, suggest } from '../logic'
 import type { QuadKey, Task } from '../types'
+import { RichEditor } from './RichEditor'
 
 export function TaskEditPanel() {
   const { data, editingTaskId, setEditingTaskId, updateTask, updateData, flash } = useStore()
@@ -58,7 +59,7 @@ export function TaskEditPanel() {
       quadrant: draft.quadrant,
       starred: draft.starred,
       done: draft.done,
-      desc: draft.desc?.trim() || undefined,
+      desc: draft.desc?.replace(/<[^>]*>/g, '').trim() ? draft.desc : undefined,
       imageDataUrl: draft.imageDataUrl || undefined,
     })
     if (draft.assignee && !data.people.some((p) => p.name.toLowerCase() === draft.assignee.toLowerCase())) {
@@ -89,7 +90,7 @@ export function TaskEditPanel() {
       />
 
       {/* Panel */}
-      <div style={css('position:fixed;top:0;right:0;bottom:0;width:460px;max-width:100vw;background:#fff;z-index:401;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(43,37,32,.16)')}>
+      <div style={css('position:fixed;top:0;right:0;bottom:0;width:720px;max-width:100vw;background:#fff;z-index:401;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(43,37,32,.16)')}>
 
         {/* Header */}
         <div style={{ ...css(`padding:20px 24px 16px;border-bottom:1px solid #F0E8DA;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:${currentProj.tint}`), flexShrink: 0 }}>
@@ -152,17 +153,16 @@ export function TaskEditPanel() {
             </div>
           </div>
 
-          {/* Descripción */}
+          {/* Descripción enriquecida */}
           <div>
             <label style={css("display:block;font:700 12px 'Hanken Grotesk';color:#2B2520;margin-bottom:6px")}>
               Descripción / comentarios <span style={css('font-weight:500;color:#A89B86')}>· opcional</span>
             </label>
-            <textarea
+            <RichEditor
               value={draft.desc ?? ''}
-              onChange={(e) => patch({ desc: e.target.value })}
-              rows={3}
-              placeholder="Detalles, contexto…"
-              style={css("width:100%;padding:11px 13px;border:1px solid #DDD3C2;border-radius:10px;font:400 14px 'Hanken Grotesk';color:#2B2520;background:#FCFAF5;resize:vertical;line-height:1.5")}
+              onChange={(html) => patch({ desc: html })}
+              minHeight={220}
+              placeholder="Detalles, contexto, actualizaciones…"
             />
           </div>
 

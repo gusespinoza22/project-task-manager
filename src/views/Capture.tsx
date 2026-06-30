@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useStore } from '../store'
 import { PALETTE } from '../constants'
 import { css } from '../logic'
+import { RichEditor } from '../components/RichEditor'
 
 export function Capture() {
   const {
@@ -94,17 +95,15 @@ export function Capture() {
               </div>
             </div>
 
-            {/* Descripción */}
+            {/* Descripción enriquecida */}
             <div>
               <label style={css("display:block;font:700 12px 'Hanken Grotesk';color:#2B2520;margin-bottom:6px")}>
                 Descripción / comentarios <span style={css('font-weight:500;color:#A89B86')}>· opcional</span>
               </label>
-              <textarea
+              <RichEditor
                 value={taskForm.desc}
-                onChange={(e) => setTaskForm({ desc: e.target.value })}
-                rows={3}
-                placeholder="Detalles, contexto…"
-                style={css("width:100%;padding:11px 14px;border:1px solid #DDD3C2;border-radius:10px;font:400 14px 'Hanken Grotesk';color:#2B2520;background:#FCFAF5;resize:vertical;line-height:1.5")}
+                onChange={(html) => setTaskForm({ desc: html })}
+                minHeight={140}
               />
             </div>
 
