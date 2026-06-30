@@ -1,0 +1,38 @@
+import type { AppData } from './types'
+
+/** Initial sample data, lifted verbatim from the Claude Design prototype. */
+export const SEED: AppData = {
+  projects: [
+    { id: 'p1', name: 'Lanzamiento App Móvil', area: 'Producto', color: '#C75D3C', tint: '#F7E7E0', status: 'active', notes: 'MVP para iOS/Android antes del cierre de trimestre. Patricia pidió marcación personal en el alcance.\nPendiente confirmar proveedor de QA.', zone: { x: 40, y: 40, w: 380, h: 330 } },
+    { id: 'p2', name: 'Reporte Trimestral Dirección', area: 'Finanzas', color: '#2E7D6B', tint: '#E1EEEA', status: 'active', notes: 'Consolidado Q2 para junta de consejo. Necesita cifras de Finanzas y slides ejecutivos limpios.', zone: { x: 450, y: 40, w: 380, h: 330 } },
+    { id: 'p3', name: 'Migración CRM', area: 'Operaciones', color: '#B8841C', tint: '#F5ECD6', status: 'active', notes: 'Migrar de hoja de cálculo a CRM nuevo. Riesgo: base actual con duplicados.', zone: { x: 860, y: 40, w: 420, h: 360 } },
+    { id: 'p4', name: 'Campaña Marca Q3', area: 'Marketing', color: '#B5546E', tint: '#F6E5EA', status: 'active', notes: 'Relanzamiento de identidad. Agencia externa + pauta digital.', zone: { x: 40, y: 410, w: 380, h: 330 } },
+    { id: 'p5', name: 'Onboarding Equipo Nuevo', area: 'Recursos Humanos', color: '#6E8B4A', tint: '#EBEFE0', status: 'paused', notes: 'Tres ingresos en julio. Inducción de 2 semanas + accesos.', zone: { x: 450, y: 410, w: 420, h: 330 } },
+  ],
+  people: [
+    { name: 'Yo' },
+    { name: 'Mariana López' },
+    { name: 'Diego Fuentes' },
+    { name: 'Sofía Ramos' },
+    { name: 'Carlos Mena' },
+  ],
+  tasks: [
+    { id: 't1', projectId: 'p1', title: 'Definir alcance del MVP', assignee: 'Yo', importance: true, urgent: true, quadrant: 'do', starred: true, done: false, firstThing: true, ftOrder: 0, lastMoved: 2, x: 70, y: 100 },
+    { id: 't2', projectId: 'p1', title: 'Wireframes de onboarding', assignee: 'Mariana López', importance: true, urgent: false, quadrant: 'schedule', starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 5, x: 95, y: 210 },
+    { id: 't3', projectId: 'p1', title: 'Contratar QA externo', assignee: 'Diego Fuentes', importance: false, urgent: true, quadrant: 'delegate', starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 1, x: 120, y: 300 },
+    { id: 't4', projectId: 'p1', title: 'Revisar copys de la store', assignee: 'Yo', importance: false, urgent: false, quadrant: null, starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 22, x: 250, y: 140 },
+    { id: 't5', projectId: 'p2', title: 'Consolidar números Q2', assignee: 'Yo', importance: true, urgent: true, quadrant: 'do', starred: true, done: false, firstThing: false, ftOrder: 0, lastMoved: 1, x: 475, y: 100 },
+    { id: 't6', projectId: 'p2', title: 'Pedir cifras a Finanzas', assignee: 'Sofía Ramos', importance: false, urgent: true, quadrant: null, starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 3, x: 505, y: 210 },
+    { id: 't7', projectId: 'p2', title: 'Diseñar slides ejecutivos', assignee: 'Carlos Mena', importance: true, urgent: false, quadrant: 'schedule', starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 4, x: 640, y: 155 },
+    { id: 't8', projectId: 'p3', title: 'Mapear campos de contactos', assignee: 'Diego Fuentes', importance: true, urgent: false, quadrant: null, starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 6, x: 885, y: 100 },
+    { id: 't9', projectId: 'p3', title: 'Aprobar presupuesto proveedor', assignee: 'Yo', importance: true, urgent: true, quadrant: 'do', starred: true, done: false, firstThing: true, ftOrder: 1, lastMoved: 1, x: 905, y: 210 },
+    { id: 't10', projectId: 'p3', title: 'Limpiar duplicados base actual', assignee: 'Mariana López', importance: false, urgent: false, quadrant: null, starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 35, x: 1085, y: 120 },
+    { id: 't11', projectId: 'p3', title: 'Capacitación equipo ventas', assignee: 'Sofía Ramos', importance: true, urgent: false, quadrant: 'schedule', starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 8, x: 915, y: 305 },
+    { id: 't12', projectId: 'p4', title: 'Brief creativo agencia', assignee: 'Yo', importance: true, urgent: true, quadrant: 'do', starred: true, done: false, firstThing: false, ftOrder: 0, lastMoved: 2, x: 70, y: 470 },
+    { id: 't13', projectId: 'p4', title: 'Calendario de contenidos', assignee: 'Carlos Mena', importance: true, urgent: false, quadrant: 'schedule', starred: false, done: false, firstThing: true, ftOrder: 2, lastMoved: 7, x: 95, y: 580 },
+    { id: 't14', projectId: 'p4', title: 'Cotizar pauta digital', assignee: 'Diego Fuentes', importance: false, urgent: true, quadrant: null, starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 2, x: 250, y: 500 },
+    { id: 't15', projectId: 'p5', title: 'Plan de inducción 2 semanas', assignee: 'Yo', importance: true, urgent: false, quadrant: 'schedule', starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 9, x: 480, y: 470 },
+    { id: 't16', projectId: 'p5', title: 'Accesos y equipos TI', assignee: 'Mariana López', importance: false, urgent: true, quadrant: null, starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 3, x: 505, y: 580 },
+    { id: 't17', projectId: 'p5', title: 'Documento de bienvenida', assignee: 'Yo', importance: false, urgent: false, quadrant: null, starred: false, done: false, firstThing: false, ftOrder: 0, lastMoved: 28, x: 660, y: 490 },
+  ],
+}
