@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
-import { assigneeStyle, chip, css } from '../logic'
+import { assigneeStyle, chip, css, eff } from '../logic'
+import { QMETA } from '../constants'
 
 interface Ghost {
   id: string
@@ -152,14 +153,32 @@ export function FirstThing() {
         <div style={css('display:flex;flex-direction:column;gap:8px')}>
           {candidates.map((t) => {
             const p = proj(t.projectId)
+            const q = QMETA[eff(t)]
             return (
               <button
                 key={t.id}
                 onClick={() => toggleFt(t.id)}
-                style={css('display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:11px 15px;background:#fff;border:1px solid #ECE3D3;border-radius:11px;cursor:pointer')}
+                style={css('display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:11px 15px;background:#fff;border:1px solid #ECE3D3;border-radius:11px;cursor:pointer')}
               >
-                <span style={css('font-size:18px;color:#C9BCA4;line-height:1')}>+</span>
+                <span style={css('font-size:18px;color:#C9BCA4;line-height:1;flex-shrink:0')}>+</span>
                 <span style={css("flex:1;min-width:0;font:600 14px 'Hanken Grotesk';color:#2B2520")}>{t.title}</span>
+                {/* Quadrant badge */}
+                <span style={{
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '3px 8px',
+                  borderRadius: 6,
+                  background: q.bg,
+                  border: `1px solid ${q.accent}33`,
+                  font: "600 11px 'JetBrains Mono'",
+                  color: q.accent,
+                  whiteSpace: 'nowrap',
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: q.accent, display: 'inline-block', flexShrink: 0 }} />
+                  {q.label}
+                </span>
                 <span style={chip(p.color, p.tint)}>{p.name}</span>
                 <span style={assigneeStyle(t.assignee)}>{t.assignee}</span>
               </button>
