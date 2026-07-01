@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState, useMemo } from 'react'
 import { useStore } from '../store'
 import { assigneeStyle, chip, css, eff } from '../logic'
 import { QMETA } from '../constants'
@@ -76,12 +76,32 @@ export function FirstThing() {
     }
   }, [dragId, updateData])
 
+  type SortKey = 'priority' | 'project' | 'assignee'
+  const QUAD_RANK: Record<string, number> = { do: 0, schedule: 1, delegate: 2, eliminate: 3 }
+  const [sortBy, setSortBy] = useState<SortKey>('priority')
+
   const ftAll = data.tasks.filter((t) => t.firstThing && !t.done).sort((a, b) => a.ftOrder - b.ftOrder)
   const ftList = ghost ? ftAll.filter((t) => t.id !== ghost.id) : ftAll
   const ftInsert = ghost ? (ghost.idx == null ? ftList.length : ghost.idx) : -1
   const lineStyle = css('height:3px;border-radius:2px;background:#C75D3C;margin:1px 4px')
-  const candidates = data.tasks.filter((t) => !t.firstThing && !t.done)
   const ghostTask = ghost ? data.tasks.find((t) => t.id === ghost.id) : null
+
+  const candidates = useMemo(() => {
+    const base = data.tasks.filter((t) => !t.firstThing && !t.done)
+    if (sortBy === 'priority') {
+      return [...base].sort((a, b) => (QUAD_RANK[eff(a)] ?? 9) - (QUAD_RANK[eff(b)] ?? 9))
+    }
+    if (sortBy === 'project') {
+      return [...base].sort((a, b) => {
+        const pa = proj(a.projectId)?.name ?? ''
+        const pb = proj(b.projectId)?.name ?? ''
+        return pa.localeCompare(pb, 'es')
+      })
+    }
+    // assignee
+    return [...base].sort((a, b) => a.assignee.localeCompare(b.assignee, 'es'))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.tasks, sortBy])
 
   return (
     <section>
@@ -147,8 +167,30 @@ export function FirstThing() {
           </div>
         </div>
 
-        <div style={css("font:600 11px 'JetBrains Mono';letter-spacing:.5px;text-transform:uppercase;color:#A89B86;margin-bottom:11px")}>
-          Agregar desde pendientes
+        <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;flex-wrap:wrap')}>
+          <span style={css("font:600 11px 'JetBrains Mono';letter-spacing:.5px;text-transform:uppercase;color:#A89B86")}>
+            Agregar desde pendientes
+          </span>
+          <div style={css('display:flex;align-items:center;gap:4px')}>
+            <span style={css("font:500 11px 'JetBrains Mono';color:#C4B89E;margin-right:2px")}>Ordenar:</span>
+            {([
+              { key: 'priority', label: 'Prioridad' },
+              { key: 'project',  label: 'Proyecto'  },
+              { key: 'assignee', label: 'Asignado'  },
+            ] as { key: SortKey; label: string }[]).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setSortBy(key)}
+                style={css(`padding:4px 10px;border-radius:7px;font:600 12px 'Hanken Grotesk';cursor:pointer;border:1px solid ${
+                  sortBy === key ? '#2B2520' : '#DDD3C2'
+                };background:${sortBy === key ? '#2B2520' : '#fff'};color:${
+                  sortBy === key ? '#F4EEE4' : '#6B6358'
+                }`)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         <div style={css('display:flex;flex-direction:column;gap:8px')}>
           {candidates.map((t) => {
