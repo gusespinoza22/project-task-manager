@@ -12,6 +12,7 @@ import { ProjectDetail } from './views/ProjectDetail'
 import { Eisenhower } from './views/Eisenhower'
 import { FirstThing } from './views/FirstThing'
 import { Capture } from './views/Capture'
+import { TaskList } from './views/TaskList'
 
 export function App() {
   const s = useStore()
@@ -73,6 +74,7 @@ export function App() {
         {s.view === 'eisenhower' && <Eisenhower isMobile={m} />}
         {s.view === 'first' && <FirstThing />}
         {s.view === 'capture' && <Capture />}
+        {s.view === 'list' && <TaskList />}
       </main>
       <Toast />
       <TaskEditPanel />

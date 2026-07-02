@@ -4,6 +4,15 @@ import { QMETA, QUAD_ORDER } from '../constants'
 import { assigneeStyle, chip, css, eff, starBadge, suggest } from '../logic'
 import type { QuadKey, TaskFilter } from '../types'
 
+function EditIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  )
+}
+
 interface Ghost {
   id: string
   x: number
@@ -20,7 +29,7 @@ const FILT: Record<TaskFilter, string> = {
 }
 
 export function Eisenhower({ isMobile }: { isMobile: boolean }) {
-  const { data, filter, setFilter, updateData, updateTask, flash } = useStore()
+  const { data, filter, setFilter, updateData, updateTask, flash, setEditingTaskId } = useStore()
   const [dragId, setDragId] = useState<string | null>(null)
   const [ghost, setGhost] = useState<Ghost | null>(null)
   const quadRef = useRef<QuadKey | null>(null)
@@ -192,6 +201,17 @@ export function Eisenhower({ isMobile }: { isMobile: boolean }) {
                             <div style={css("font:600 14px 'Hanken Grotesk';color:#2B2520;line-height:1.3")}>{t.title}</div>
                           </div>
                           {t.starred && <span style={starBadge()}>★</span>}
+                          <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingTaskId(t.id)
+                            }}
+                            title="Editar tarea"
+                            style={css('flex-shrink:0;width:26px;height:26px;border:1px solid #E9E1D3;border-radius:7px;background:#fff;color:#A89B86;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0')}
+                          >
+                            <EditIcon />
+                          </button>
                         </div>
                         {t.quadrant === null && (
                           <div style={css('margin-top:9px;display:flex;align-items:center;gap:8px;padding-top:9px;border-top:1px dashed #E7DECF')}>

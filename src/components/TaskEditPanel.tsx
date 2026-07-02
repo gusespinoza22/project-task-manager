@@ -90,7 +90,7 @@ export function TaskEditPanel() {
       />
 
       {/* Panel */}
-      <div style={css('position:fixed;top:0;right:0;bottom:0;width:720px;max-width:100vw;background:#fff;z-index:401;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(43,37,32,.16)')}>
+      <div style={css('position:fixed;top:0;right:0;bottom:0;width:50vw;max-width:100vw;background:#fff;z-index:401;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(43,37,32,.16)')}>
 
         {/* Header */}
         <div style={{ ...css(`padding:20px 24px 16px;border-bottom:1px solid #F0E8DA;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:${currentProj.tint}`), flexShrink: 0 }}>

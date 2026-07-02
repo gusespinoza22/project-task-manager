@@ -57,6 +57,7 @@ export type View =
   | 'eisenhower'
   | 'first'
   | 'capture'
+  | 'list'
 
 export type TaskFilter = 'all' | 'mine' | 'delegated' | 'starred'
 export type PortFilter = 'all' | 'active' | 'paused'
