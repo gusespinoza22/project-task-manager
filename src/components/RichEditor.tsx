@@ -71,6 +71,36 @@ export function RichEditor({
     onChange(editorRef.current?.innerHTML ?? '')
   }
 
+  // Explicit clipboard handlers so text/html is ALWAYS on the clipboard when
+  // copying from the editor. Without this, some browsers only put text/plain,
+  // which loses all formatting (bold, bullets, paragraphs) when pasting into
+  // Word, Google Docs, Outlook, etc.
+  const putOnClipboard = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const sel = window.getSelection()
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return false
+    const range = sel.getRangeAt(0)
+    const wrapper = document.createElement('div')
+    wrapper.appendChild(range.cloneContents())
+    e.clipboardData.setData('text/html', wrapper.innerHTML)
+    e.clipboardData.setData('text/plain', sel.toString())
+    e.preventDefault()
+    return true
+  }
+
+  const handleCopy = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    putOnClipboard(e)
+  }
+
+  const handleCut = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const sel = window.getSelection()
+    if (!putOnClipboard(e)) return
+    // Delete selected content after putting it on the clipboard
+    if (sel && sel.rangeCount) {
+      sel.getRangeAt(0).deleteContents()
+      onChange(editorRef.current?.innerHTML ?? '')
+    }
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const mod = e.metaKey || e.ctrlKey
 
@@ -175,6 +205,8 @@ export function RichEditor({
           suppressContentEditableWarning
           className="rich-editor"
           onKeyDown={handleKeyDown}
+          onCopy={handleCopy}
+          onCut={handleCut}
           onInput={() => onChange(editorRef.current?.innerHTML ?? '')}
           onFocus={() => { focusedRef.current = true }}
           onBlur={() => { focusedRef.current = false }}

@@ -129,6 +129,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const toastTimer = useRef<number | undefined>(undefined)
   const saveTimer = useRef<number | undefined>(undefined)
+  const autoSaveTimer = useRef<number | undefined>(undefined)
   // Serialized snapshot of the last committed state — used to decide whether
   // there are unsaved changes (robust to React StrictMode double-mounting).
   const lastSavedJson = useRef<string>(JSON.stringify(data))
@@ -154,8 +155,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Autosave the working draft to localStorage on every data change, and flag
-  // dirty only when the state actually differs from the last committed one.
+  // Autosave to localStorage on every change + debounced auto-persist to data.json.
+  // localStorage is always up-to-date (synchronous). data.json is updated 3 s
+  // after the last change so the user never has to click "Guardar" to persist.
   useEffect(() => {
     const json = JSON.stringify(data)
     try {
@@ -164,6 +166,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* quota / private mode — ignore */
     }
     setDirty(json !== lastSavedJson.current)
+
+    // Debounced auto-persist to data.json (silent — no UI noise on every keystroke)
+    window.clearTimeout(autoSaveTimer.current)
+    autoSaveTimer.current = window.setTimeout(() => {
+      fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data, null, 2),
+      })
+        .then((r) => {
+          if (!r.ok) return
+          lastSavedJson.current = json
+          setDirty(false)
+        })
+        .catch(() => {
+          // Server not available — localStorage remains the live backup.
+          // The manual "Guardar" button will download the JSON as fallback.
+        })
+    }, 3000)
   }, [data])
 
   const flash = useCallback((msg: string) => {
@@ -299,6 +320,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [flash])
 
   const save = useCallback(async () => {
+    window.clearTimeout(autoSaveTimer.current) // cancel pending auto-save; we're saving now
     setSaveState('saving')
     const payload = JSON.stringify(data, null, 2)
     try {
