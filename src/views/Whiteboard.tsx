@@ -39,6 +39,7 @@ export function Whiteboard({ isMobile }: { isMobile: boolean }) {
   const dragRef = useRef<DragState | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showDone, setShowDone] = useState(false)
 
   // Track fullscreen state changes (including Esc key exit)
   useEffect(() => {
@@ -217,6 +218,16 @@ export function Whiteboard({ isMobile }: { isMobile: boolean }) {
           </button>
 
           <button
+            onClick={() => setShowDone((v) => !v)}
+            title={showDone ? 'Ocultar completadas' : 'Mostrar completadas'}
+            style={css(`display:flex;align-items:center;gap:6px;padding:9px 13px;border:1px solid ${showDone ? '#2E7D6B' : '#DDD3C2'};border-radius:10px;background:${showDone ? '#E9F2EC' : '#fff'};color:${showDone ? '#2E7D6B' : '#6B6358'};font:600 13px 'Hanken Grotesk';cursor:pointer`)}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            {!isMobile && 'Completadas'}
+          </button>
+          <button
             onClick={() => setView('capture')}
             style={css("display:flex;align-items:center;gap:7px;padding:10px 16px;border:none;border-radius:11px;background:#2B2520;color:#F4EEE4;font:600 14px 'Hanken Grotesk';cursor:pointer")}
           >
@@ -358,8 +369,8 @@ export function Whiteboard({ isMobile }: { isMobile: boolean }) {
             )
           })}
 
-          {/* ── Task cards ── */}
-          {data.tasks.map((t) => {
+          {/* ── Task cards — done tasks hidden unless showDone toggle is active ── */}
+          {data.tasks.filter((t) => showDone || !t.done).map((t) => {
             const p = proj(t.projectId)
             const q = QMETA[eff(t)]
             const dragging = dragState?.kind === 'task' && dragState.id === t.id

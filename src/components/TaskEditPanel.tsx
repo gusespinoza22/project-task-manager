@@ -277,13 +277,22 @@ export function TaskEditPanel() {
           >
             Guardar cambios
           </button>
-          <button
-            onClick={deleteTask}
-            style={css("padding:11px 15px;border:1px solid #E8CFC8;border-radius:11px;background:#fff;color:#C75D3C;font:600 13px 'Hanken Grotesk';cursor:pointer")}
-            title="Eliminar tarea"
-          >
-            🗑 Eliminar
-          </button>
+          {draft.done ? (
+            <div
+              title="Las tareas completadas no se pueden eliminar"
+              style={css("padding:11px 15px;border:1px solid #E9E1D3;border-radius:11px;background:#F7F3ED;color:#B5A892;font:600 13px 'Hanken Grotesk';cursor:not-allowed;display:inline-flex;align-items:center;gap:6px")}
+            >
+              🔒 Completada
+            </div>
+          ) : (
+            <button
+              onClick={deleteTask}
+              style={css("padding:11px 15px;border:1px solid #E8CFC8;border-radius:11px;background:#fff;color:#C75D3C;font:600 13px 'Hanken Grotesk';cursor:pointer")}
+              title="Eliminar tarea"
+            >
+              🗑 Eliminar
+            </button>
+          )}
         </div>
       </div>
     </>

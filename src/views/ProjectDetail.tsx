@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useStore } from '../store'
 import { PALETTE, PROJECT_NAV, QMETA } from '../constants'
 import { assigneeStyle, css, eff, hexTint, isStalled } from '../logic'
@@ -30,8 +31,10 @@ export function ProjectDetail({ isMobile }: { isMobile: boolean }) {
     setEditingTaskId,
   } = useStore()
 
+  const [showDone, setShowDone] = useState(false)
   const sel = data.projects.find((p) => p.id === selectedProjectId) ?? data.projects[0]
   const selTasks = data.tasks.filter((t) => t.projectId === sel.id)
+  const visibleTasks = showDone ? selTasks : selTasks.filter((t) => !t.done)
   const summary = {
     taskCount: selTasks.length,
     doneCount: selTasks.filter((t) => t.done).length,
@@ -173,14 +176,30 @@ export function ProjectDetail({ isMobile }: { isMobile: boolean }) {
           )}
 
           <div style={css('margin-top:22px;border-top:1px solid #F0E8DA;padding-top:18px')}>
-            <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:12px')}>
+            <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px')}>
               <h2 style={css("margin:0;font:700 16px 'Hanken Grotesk';color:#2B2520")}>Tareas del proyecto</h2>
-              <span style={css("font:600 12px 'JetBrains Mono';color:#8C8275")}>
-                {summary.doneCount}/{summary.taskCount} hechas
-              </span>
+              <div style={css('display:flex;align-items:center;gap:10px')}>
+                {summary.doneCount > 0 && (
+                  <button
+                    onClick={() => setShowDone((v) => !v)}
+                    style={css(`display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;border:1px solid ${showDone ? '#2E7D6B' : '#DDD3C2'};background:${showDone ? '#E9F2EC' : '#fff'};color:${showDone ? '#2E7D6B' : '#8C8275'};font:600 12px 'Hanken Grotesk';cursor:pointer`)}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {showDone
+                        ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>
+                        : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
+                      }
+                    </svg>
+                    {showDone ? 'Ocultar completadas' : `Ver ${summary.doneCount} completadas`}
+                  </button>
+                )}
+                <span style={css("font:600 12px 'JetBrains Mono';color:#8C8275")}>
+                  {summary.doneCount}/{summary.taskCount} hechas
+                </span>
+              </div>
             </div>
             <div style={css('display:flex;flex-direction:column;gap:9px')}>
-              {selTasks.map((t) => {
+              {visibleTasks.map((t) => {
                 const q = QMETA[eff(t)]
                 return (
                   <div
