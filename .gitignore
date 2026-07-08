@@ -21,3 +21,8 @@ Thumbs.db
 
 # Snapshots of data.json taken automatically before every save (safety net)
 .data-backups/
+
+# Datos reales del usuario — el repo es público; nunca se sube data.json.
+# data.example.json (con datos de ejemplo) sí se versiona y sirve de plantilla
+# para crear data.json automáticamente en la primera ejecución.
+data.json

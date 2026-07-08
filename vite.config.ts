@@ -17,6 +17,16 @@ function saveDataPlugin(): Plugin {
   return {
     name: 'gestor-save-data',
     configureServer(server) {
+      // data.json holds real user data and is gitignored (the repo is
+      // public — data.example.json is the only thing tracked in git). On a
+      // fresh clone there's no data.json yet, so seed one from the example
+      // template the first time the dev server starts.
+      const file = path.resolve(server.config.root, 'data.json')
+      const example = path.resolve(server.config.root, 'data.example.json')
+      if (!fs.existsSync(file) && fs.existsSync(example)) {
+        fs.copyFileSync(example, file)
+      }
+
       // data.json is the database — never let a stale cached response stand
       // in for the real current file.
       server.middlewares.use((req, res, next) => {

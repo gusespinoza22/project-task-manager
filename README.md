@@ -24,12 +24,20 @@ npm run preview  # previsualizar el build
 
 ## Persistencia
 
-- El estado vivo se guarda automáticamente en **localStorage** mientras trabajas.
-- El botón **"Guardar cambios"** (barra lateral) escribe el estado completo en
-  **`data.json`** en la raíz del proyecto, mediante un endpoint del servidor de
-  Vite (`POST /api/save`). Ese archivo es la fuente de verdad persistente.
-- Al cargar: primero `localStorage`; si está vacío, se lee `data.json`; si
-  tampoco existe, se usan los datos semilla (`src/seed.ts`).
+- **`data.json`** en la raíz del proyecto es la única fuente de verdad. Contiene
+  datos reales del usuario, **no se sube a git** (este repo es público) y está
+  en `.gitignore`.
+- **`data.example.json`** sí está versionado: es una plantilla con datos de
+  ejemplo. La primera vez que corres `npm run dev` en un clon nuevo, el
+  servidor de Vite copia automáticamente `data.example.json` → `data.json` si
+  este último no existe todavía.
+- Al cargar la app, siempre se pide `data.json` fresco al servidor (nunca se
+  confía en `localStorage` para decidir qué mostrar). `localStorage` solo se
+  usa como respaldo si el archivo no se puede leer.
+- El botón **"Guardar cambios"** (barra lateral) es lo único que escribe en
+  `data.json`, vía `POST /api/save`. No hay autoguardado silencioso a disco.
+  Antes de cada escritura se guarda una copia del archivo anterior en
+  `.data-backups/` (gitignored) como red de seguridad.
 - Si el servidor no está disponible (p. ej. un build estático servido sin Vite),
   "Guardar cambios" descarga `data.json` para colocarlo manualmente.
 
@@ -51,5 +59,6 @@ src/
   components/           Sidebar, Alerts, Toast, SaveButton
   views/                Whiteboard, Portfolio, ProjectDetail, Eisenhower,
                         FirstThing, Capture
-data.json               estado persistido (escrito por "Guardar cambios")
+data.example.json       plantilla de ejemplo (versionada en git)
+data.json               estado real del usuario (gitignored, no se sube)
 ```

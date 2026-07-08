@@ -13,8 +13,10 @@ Ante cualquier cambio, mejora, refactor o nueva funcionalidad en este proyecto:
 ## Stack
 
 - React + Vite + TypeScript
-- Persistencia: `localStorage` (borrador vivo) + `data.json` en raíz (guardado manual vía botón "Guardar cambios" → `POST /api/save`)
-- Fuente de carga: localStorage → data.json → datos semilla (`src/seed.ts`)
+- Persistencia: `data.json` en raíz es la única fuente de verdad. Se lee siempre fresco del servidor al cargar la app (nunca desde `localStorage`) y solo se escribe al presionar "Guardar cambios" (`POST /api/save`). `localStorage` es solo un respaldo de emergencia si el archivo no se puede leer.
+- `data.json` contiene datos reales del usuario y **nunca se sube a git** (repo público). Está en `.gitignore`. `data.example.json` sí se versiona: es la plantilla genérica que el servidor de desarrollo copia automáticamente a `data.json` la primera vez que se corre el proyecto (ver `vite.config.ts`).
+- Cada "Guardar cambios" crea antes un respaldo del `data.json` anterior en `.data-backups/` (gitignored, no manual).
+- Fuente de carga: data.json (servidor) → localStorage (solo si el archivo no se pudo leer) → datos semilla `src/seed.ts` (último recurso, con aviso visible y "Guardar" deshabilitado).
 
 ## Estructura
 
