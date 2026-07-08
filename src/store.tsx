@@ -43,6 +43,12 @@ export interface ProjectForm {
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
+// 'loading'        — data.json aún no responde; no se muestra nada real todavía.
+// 'file'           — estado normal: los datos vienen de data.json (la fuente de verdad).
+// 'local-fallback' — data.json no se pudo leer; se usó la última copia en localStorage.
+// 'seed-fallback'  — no hubo ni data.json ni copia local; se muestran datos de ejemplo.
+export type LoadState = 'loading' | 'file' | 'local-fallback' | 'seed-fallback'
+
 interface Store {
   data: AppData
   view: View
@@ -54,6 +60,7 @@ interface Store {
   toast: string | null
   dirty: boolean
   saveState: SaveState
+  loadState: LoadState
 
   taskForm: TaskForm
   projectForm: ProjectForm
@@ -103,16 +110,14 @@ function emptyProjectForm(): ProjectForm {
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const stored = useRef<AppData | null>(loadFromStorage())
-  const [data, setData] = useState<AppData>(() =>
-    stored.current
-      ? { ...stored.current, tasks: withEisOrder(stored.current.tasks) }
-      : { ...SEED, tasks: withEisOrder(SEED.tasks) },
-  )
+  // data.json is the database. This initial value is only a placeholder for
+  // the brief 'loading' window before the fetch below resolves — it is never
+  // shown (App.tsx renders a loading screen while loadState === 'loading')
+  // and it is never written to disk.
+  const [data, setData] = useState<AppData>(() => ({ ...SEED, tasks: withEisOrder(SEED.tasks) }))
+  const [loadState, setLoadState] = useState<LoadState>('loading')
   const [view, setView] = useState<View>('whiteboard')
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(
-    () => (stored.current ?? SEED).projects[0]?.id ?? 'p1',
-  )
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => SEED.projects[0]?.id ?? 'p1')
   const [filter, setFilter] = useState<TaskFilter>('all')
   const [portFilter, setPortFilter] = useState<PortFilter>('all')
   const [captureTab, setCaptureTab] = useState<CaptureTab>('task')
@@ -129,36 +134,58 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const toastTimer = useRef<number | undefined>(undefined)
   const saveTimer = useRef<number | undefined>(undefined)
-  const autoSaveTimer = useRef<number | undefined>(undefined)
   // Serialized snapshot of the last committed state — used to decide whether
   // there are unsaved changes (robust to React StrictMode double-mounting).
   const lastSavedJson = useRef<string>(JSON.stringify(data))
 
-  // If localStorage was empty, hydrate from the persisted data.json file.
+  // data.json is the single source of truth on load. localStorage is never
+  // used to decide what the user sees — it only exists as a best-effort
+  // fallback for when the file genuinely can't be read (server down, no
+  // network). `cache: 'no-store'` guarantees we never render a stale cached
+  // response instead of the real current file.
   useEffect(() => {
-    if (stored.current) return
     let cancelled = false
-    fetch('/data.json')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no file'))))
+    fetch('/data.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('bad status ' + r.status))))
       .then((d: AppData) => {
         if (cancelled) return
+        if (!d?.projects || !d?.tasks) throw new Error('invalid data.json shape')
         const loaded: AppData = { ...d, tasks: withEisOrder(d.tasks) }
         lastSavedJson.current = JSON.stringify(loaded)
         setData(loaded)
         setSelectedProjectId((cur) => (d.projects.some((p) => p.id === cur) ? cur : d.projects[0]?.id ?? cur))
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify(loaded))
+        } catch {
+          /* quota / private mode — ignore */
+        }
+        setLoadState('file')
       })
       .catch(() => {
-        /* keep seed defaults */
+        if (cancelled) return
+        const local = loadFromStorage()
+        if (local) {
+          const loaded: AppData = { ...local, tasks: withEisOrder(local.tasks) }
+          lastSavedJson.current = JSON.stringify(loaded)
+          setData(loaded)
+          setSelectedProjectId((cur) => (local.projects.some((p) => p.id === cur) ? cur : local.projects[0]?.id ?? cur))
+          setLoadState('local-fallback')
+        } else {
+          lastSavedJson.current = JSON.stringify(SEED)
+          setLoadState('seed-fallback')
+        }
       })
     return () => {
       cancelled = true
     }
   }, [])
 
-  // Autosave to localStorage on every change + debounced auto-persist to data.json.
-  // localStorage is always up-to-date (synchronous). data.json is updated 3 s
-  // after the last change so the user never has to click "Guardar" to persist.
+  // Mirror to localStorage as a local safety net only (used solely as the
+  // fallback above if data.json can't be reached on a future load). This
+  // NEVER writes to data.json — the file is only ever written by the
+  // explicit "Guardar cambios" action in `save()`.
   useEffect(() => {
+    if (loadState === 'loading') return
     const json = JSON.stringify(data)
     try {
       localStorage.setItem(LS_KEY, json)
@@ -166,26 +193,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* quota / private mode — ignore */
     }
     setDirty(json !== lastSavedJson.current)
+  }, [data, loadState])
 
-    // Debounced auto-persist to data.json (silent — no UI noise on every keystroke)
-    window.clearTimeout(autoSaveTimer.current)
-    autoSaveTimer.current = window.setTimeout(() => {
-      fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data, null, 2),
-      })
-        .then((r) => {
-          if (!r.ok) return
-          lastSavedJson.current = json
-          setDirty(false)
-        })
-        .catch(() => {
-          // Server not available — localStorage remains the live backup.
-          // The manual "Guardar" button will download the JSON as fallback.
-        })
-    }, 3000)
-  }, [data])
+  // Warn before closing/refreshing with unsaved changes — data.json is only
+  // ever as current as the last explicit save.
+  useEffect(() => {
+    if (!dirty) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirty])
 
   const flash = useCallback((msg: string) => {
     setToast(msg)
@@ -320,7 +340,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [flash])
 
   const save = useCallback(async () => {
-    window.clearTimeout(autoSaveTimer.current) // cancel pending auto-save; we're saving now
+    if (loadState === 'seed-fallback') {
+      flash('No se puede guardar: no se pudo leer data.json. Recarga la página con conexión antes de guardar.')
+      return
+    }
     setSaveState('saving')
     const payload = JSON.stringify(data, null, 2)
     try {
@@ -333,6 +356,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       lastSavedJson.current = JSON.stringify(data)
       setDirty(false)
       setSaveState('saved')
+      setLoadState('file')
       flash('Cambios guardados en data.json')
       window.clearTimeout(saveTimer.current)
       saveTimer.current = window.setTimeout(() => setSaveState('idle'), 2000)
@@ -357,7 +381,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         flash('No se pudo guardar')
       }
     }
-  }, [data, flash])
+  }, [data, flash, loadState])
 
   const value = useMemo<Store>(
     () => ({
@@ -371,6 +395,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toast,
       dirty,
       saveState,
+      loadState,
       taskForm,
       projectForm,
       editingTaskId,
@@ -397,7 +422,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       data, view, selectedProjectId, filter, portFilter, captureTab, projEditing,
-      toast, dirty, saveState, taskForm, projectForm, editingTaskId, updateData,
+      toast, dirty, saveState, loadState, taskForm, projectForm, editingTaskId, updateData,
       updateTask, updateProject, flash, setTaskForm, setProjectForm, submitTask,
       submitProject, startTaskForProject, save,
     ],

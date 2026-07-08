@@ -2,15 +2,17 @@ import { useStore } from '../store'
 import { css } from '../logic'
 
 export function SaveButton({ floating }: { floating?: boolean }) {
-  const { dirty, saveState, save } = useStore()
+  const { dirty, saveState, save, loadState } = useStore()
   const saving = saveState === 'saving'
+  const blocked = loadState === 'seed-fallback'
 
   let label = 'Guardado'
-  if (saving) label = 'Guardando…'
+  if (blocked) label = 'Sin data.json'
+  else if (saving) label = 'Guardando…'
   else if (saveState === 'error') label = 'Reintentar'
   else if (dirty) label = 'Guardar cambios'
 
-  const active = dirty || saveState === 'error'
+  const active = !blocked && (dirty || saveState === 'error')
 
   const base = floating
     ? `position:fixed;top:14px;right:14px;z-index:120;display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border-radius:11px;font:700 13px 'Hanken Grotesk';cursor:pointer;box-shadow:0 6px 18px rgba(43,37,32,.18);`
@@ -22,10 +24,10 @@ export function SaveButton({ floating }: { floating?: boolean }) {
 
   return (
     <button
-      onClick={() => !saving && save()}
-      disabled={saving}
-      title={dirty ? 'Hay cambios sin guardar' : 'Todo guardado'}
-      style={css(base + skin + (saving ? ';opacity:.7;cursor:default' : ''))}
+      onClick={() => !saving && !blocked && save()}
+      disabled={saving || blocked}
+      title={blocked ? 'No se pudo leer data.json — recarga antes de guardar' : dirty ? 'Hay cambios sin guardar' : 'Todo guardado'}
+      style={css(base + skin + (saving || blocked ? ';opacity:.7;cursor:default' : ''))}
     >
       {active && (
         <span

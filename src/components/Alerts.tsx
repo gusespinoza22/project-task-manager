@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useStore } from '../store'
-import { css, isStalled } from '../logic'
+import { assigneeStyle, chip, css, isStalled } from '../logic'
 import { STAR_THRESHOLD } from '../constants'
 
 export function Alerts() {
-  const { data } = useStore()
+  const { data, setView, setEditingTaskId } = useStore()
+  const [showStallPopup, setShowStallPopup] = useState(false)
 
   const starred = data.tasks.filter((t) => t.starred && !t.done)
   const showStarAlert = starred.length >= STAR_THRESHOLD
@@ -15,6 +17,14 @@ export function Alerts() {
     stalled.length === 1
       ? '1 tarea lleva semanas sin movimiento — ¿la descartas o la reprogramas?'
       : `${stalled.length} tareas llevan semanas sin movimiento. Revisa si las descartas o reprogramas.`
+
+  const proj = (id: string) => data.projects.find((p) => p.id === id)
+
+  const openTask = (taskId: string) => {
+    setShowStallPopup(false)
+    setView('list')
+    setEditingTaskId(taskId)
+  }
 
   return (
     <>
@@ -45,6 +55,64 @@ export function Alerts() {
             </svg>
           </div>
           <div style={css('flex:1;min-width:0;font-size:13.5px;color:#6E5C3C')}>{stallAlertText}</div>
+          <button
+            onClick={() => setShowStallPopup(true)}
+            style={css("flex-shrink:0;border:none;background:none;padding:0;cursor:pointer;font:600 12.5px 'Hanken Grotesk';color:#B08A4A;text-decoration:underline;white-space:nowrap")}
+          >
+            Ver tareas
+          </button>
+        </div>
+      )}
+
+      {showStallPopup && (
+        <div
+          onClick={() => setShowStallPopup(false)}
+          style={css('position:fixed;inset:0;background:rgba(43,37,32,.22);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px')}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={css('background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(43,37,32,.25)')}
+          >
+            <div style={css('padding:18px 22px;border-bottom:1px solid #F0E8DA;display:flex;align-items:center;justify-content:space-between;gap:12px')}>
+              <div style={css("font:700 16px 'Hanken Grotesk';color:#2B2520")}>
+                Tareas sin movimiento
+              </div>
+              <button
+                onClick={() => setShowStallPopup(false)}
+                style={css('border:none;background:none;cursor:pointer;color:#8C8275;font-size:18px;line-height:1;padding:2px')}
+              >×</button>
+            </div>
+            <div style={{ ...css('flex:1;padding:8px'), overflowY: 'auto' }}>
+              {stalled.map((t) => {
+                const p = proj(t.projectId)
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => openTask(t.id)}
+                    style={css('display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:11px;cursor:pointer')}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#FAF6EE' }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = '' }}
+                  >
+                    <div style={css('flex:1;min-width:0')}>
+                      <div style={css("font:600 14px 'Hanken Grotesk';color:#2B2520;margin-bottom:5px")}>
+                        {t.title}
+                      </div>
+                      <div style={css('display:flex;align-items:center;gap:6px;flex-wrap:wrap')}>
+                        {p && <span style={chip(p.color, p.tint)}>{p.name}</span>}
+                        <span style={assigneeStyle(t.assignee)}>{t.assignee}</span>
+                        <span style={css("font:600 10.5px 'JetBrains Mono';color:#B08A4A;background:#F3ECE0;border-radius:6px;padding:3px 7px")}>
+                          ⏳ {t.lastMoved} días sin mover
+                        </span>
+                      </div>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A89B86" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
     </>

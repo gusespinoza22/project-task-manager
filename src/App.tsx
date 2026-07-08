@@ -27,8 +27,30 @@ export function App() {
     ? css('padding:20px 16px 28px')
     : { flex: 1, minWidth: 0, padding: '30px 36px 60px' }
 
+  // data.json es la base de datos: mientras no confirmemos su contenido no
+  // se muestra nada, para no exponer nunca datos de ejemplo ni por un instante.
+  if (s.loadState === 'loading') {
+    return (
+      <div style={css("min-height:100vh;display:flex;align-items:center;justify-content:center;background:#EFE8DB;font-family:'Hanken Grotesk',sans-serif;color:#8C8275")}>
+        Cargando data.json…
+      </div>
+    )
+  }
+
+  const fallbackBannerText =
+    s.loadState === 'local-fallback'
+      ? '⚠ No se pudo leer data.json — se está usando la última copia local. Los cambios NO se guardarán hasta que reconectes y recargues la página.'
+      : s.loadState === 'seed-fallback'
+      ? '⚠ No se encontró data.json ni una copia local — estás viendo datos de ejemplo. Guardar está deshabilitado para no sobrescribir tu información real.'
+      : null
+
   return (
-    <div style={shellStyle}>
+    <div style={{ ...shellStyle, paddingTop: fallbackBannerText ? 40 : undefined }}>
+      {fallbackBannerText && (
+        <div style={css("position:fixed;top:0;left:0;right:0;z-index:600;background:#C0492B;color:#fff;padding:10px 16px;text-align:center;font:600 13px 'Hanken Grotesk'")}>
+          {fallbackBannerText}
+        </div>
+      )}
       <Sidebar
         isMobile={m}
         collapsed={sidebarCollapsed}
