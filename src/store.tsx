@@ -220,7 +220,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateTask = useCallback((id: string, patch: Partial<Task>) => {
     setData((d) => ({
       ...d,
-      tasks: d.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+      tasks: d.tasks.map((t) => {
+        if (t.id !== id) return t
+        const next: Task = { ...t, ...patch, updatedAt: Date.now() }
+        if (patch.done === true && !t.done) next.completedAt = Date.now()
+        else if (patch.done === false && t.done) next.completedAt = undefined
+        return next
+      }),
     }))
   }, [])
 
@@ -294,6 +300,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           y: newTaskY,
           desc: f.desc.replace(/<[^>]*>/g, '').trim() ? f.desc : undefined,
           imageDataUrl: f.imageDataUrl || undefined,
+          updatedAt: Date.now(),
         }
 
         const projects =

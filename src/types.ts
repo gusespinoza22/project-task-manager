@@ -18,6 +18,7 @@ export interface Project {
   status: ProjectStatus
   notes: string
   zone: Zone
+  starred?: boolean
 }
 
 export interface Person {
@@ -42,6 +43,8 @@ export interface Task {
   eisOrder?: number
   desc?: string
   imageDataUrl?: string
+  updatedAt?: number
+  completedAt?: number
 }
 
 export interface AppData {

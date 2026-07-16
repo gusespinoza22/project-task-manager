@@ -109,12 +109,25 @@ export function ProjectDetail({ isMobile }: { isMobile: boolean }) {
                 {sel.name}
               </h1>
             </div>
-            <button
-              onClick={() => setProjEditing((v) => !v)}
-              style={css("flex-shrink:0;padding:8px 14px;border:1px solid #DDD3C2;border-radius:10px;background:#fff;color:#6B6358;font:600 13px 'Hanken Grotesk';cursor:pointer")}
-            >
-              {projEditing ? 'Listo' : 'Editar proyecto'}
-            </button>
+            <div style={css('flex-shrink:0;display:flex;align-items:center;gap:8px')}>
+              <button
+                onClick={() => updateProject(sel.id, { starred: !sel.starred })}
+                title={sel.starred ? 'Quitar proyecto destacado' : 'Marcar como proyecto destacado'}
+                style={css(
+                  `width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;font-size:16px;background:${
+                    sel.starred ? '#E0A82E' : '#F0E8DA'
+                  };color:${sel.starred ? '#fff' : '#C4B79F'}`,
+                )}
+              >
+                ★
+              </button>
+              <button
+                onClick={() => setProjEditing((v) => !v)}
+                style={css("padding:8px 14px;border:1px solid #DDD3C2;border-radius:10px;background:#fff;color:#6B6358;font:600 13px 'Hanken Grotesk';cursor:pointer")}
+              >
+                {projEditing ? 'Listo' : 'Editar proyecto'}
+              </button>
+            </div>
           </div>
 
           {projEditing ? (

@@ -47,4 +47,10 @@ data.json                    estado persistido por el usuario
 ## Campos de Task
 
 Todos los campos son parte del contrato de datos persistido. No eliminar ninguno:
-`id, projectId, title, assignee, importance, urgent, quadrant, starred, done, firstThing, ftOrder, lastMoved, x, y, eisOrder?, desc?, imageDataUrl?`
+`id, projectId, title, assignee, importance, urgent, quadrant, starred, done, firstThing, ftOrder, lastMoved, x, y, eisOrder?, desc?, imageDataUrl?, updatedAt?, completedAt?`
+
+`updatedAt` (timestamp ms) se actualiza automáticamente en cada `updateTask`. `completedAt` (timestamp ms) se fija cuando `done` pasa de `false` a `true` y se limpia si se reabre. Ambos opcionales — tareas antiguas sin estos campos se tratan como "sin fecha registrada" en la vista de Cronología (Lista de tareas).
+
+## Campos de Project
+
+`id, name, area, color, tint, status, notes, zone, starred?`

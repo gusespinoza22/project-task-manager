@@ -34,6 +34,16 @@ export function Eisenhower({ isMobile }: { isMobile: boolean }) {
   const [ghost, setGhost] = useState<Ghost | null>(null)
   const quadRef = useRef<QuadKey | null>(null)
   const idxRef = useRef<number | null>(null)
+  const [showUnclassified, setShowUnclassified] = useState(false)
+
+  // Unclassified = no explicit quadrant set, across the whole DB (not just
+  // the current filter/view) — relies purely on the auto-suggestion for now.
+  const unclassified = data.tasks.filter((t) => !t.done && t.quadrant === null)
+
+  useEffect(() => {
+    if (unclassified.length === 0) setShowUnclassified(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unclassified.length])
 
   useEffect(() => {
     if (!dragId) return
@@ -74,7 +84,7 @@ export function Eisenhower({ isMobile }: { isMobile: boolean }) {
             ...d,
             tasks: d.tasks.map((t) =>
               t.id === dragId
-                ? { ...t, quadrant: q, eisOrder: om[t.id], lastMoved: 0 }
+                ? { ...t, quadrant: q, eisOrder: om[t.id], lastMoved: 0, updatedAt: Date.now() }
                 : om[t.id] != null
                   ? { ...t, eisOrder: om[t.id] }
                   : t,
@@ -134,6 +144,29 @@ export function Eisenhower({ isMobile }: { isMobile: boolean }) {
           ))}
         </div>
       </div>
+
+      {unclassified.length > 0 && (
+        <div style={css('margin:0 0 16px;padding:12px 16px;border-radius:13px;background:#F3ECE0;border:1px solid #DCCFB8;display:flex;align-items:center;gap:13px')}>
+          <div style={css('width:28px;height:28px;border-radius:8px;background:#B08A4A;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0')}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="9" />
+              <line x1="12" y1="7.5" x2="12" y2="12.5" />
+              <line x1="12" y1="16" x2="12" y2="16" />
+            </svg>
+          </div>
+          <div style={css('flex:1;min-width:0;font-size:13.5px;color:#6E5C3C')}>
+            {unclassified.length === 1
+              ? '1 tarea en toda la base no tiene clasificación confirmada en Eisenhower — se ubica solo por sugerencia.'
+              : `${unclassified.length} tareas en toda la base no tienen clasificación confirmada en Eisenhower — se ubican solo por sugerencia.`}
+          </div>
+          <button
+            onClick={() => setShowUnclassified(true)}
+            style={css("flex-shrink:0;border:none;background:none;padding:0;cursor:pointer;font:600 12.5px 'Hanken Grotesk';color:#B08A4A;text-decoration:underline;white-space:nowrap")}
+          >
+            Clasificar ahora
+          </button>
+        </div>
+      )}
 
       <div
         style={
@@ -205,6 +238,15 @@ export function Eisenhower({ isMobile }: { isMobile: boolean }) {
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                               e.stopPropagation()
+                              updateTask(t.id, { done: true, lastMoved: 0 })
+                            }}
+                            title="Marcar completada"
+                            style={css('flex-shrink:0;width:26px;height:26px;border:1.5px solid #CFC4B0;border-radius:7px;background:#fff;cursor:pointer;padding:0')}
+                          />
+                          <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setEditingTaskId(t.id)
                             }}
                             title="Editar tarea"
@@ -239,6 +281,88 @@ export function Eisenhower({ isMobile }: { isMobile: boolean }) {
           )
         })}
       </div>
+
+      {showUnclassified && (
+        <div
+          onClick={() => setShowUnclassified(false)}
+          style={css('position:fixed;inset:0;background:rgba(43,37,32,.22);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px')}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={css('background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(43,37,32,.25)')}
+          >
+            <div style={css('padding:18px 22px;border-bottom:1px solid #F0E8DA;display:flex;align-items:center;justify-content:space-between;gap:12px')}>
+              <div>
+                <div style={css("font:700 16px 'Hanken Grotesk';color:#2B2520")}>
+                  Clasificar tareas pendientes
+                </div>
+                <div style={css('margin-top:2px;font-size:12.5px;color:#8C8275')}>
+                  Confirma la sugerencia o elige el cuadrante manualmente.
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUnclassified(false)}
+                style={css('flex-shrink:0;border:none;background:none;cursor:pointer;color:#8C8275;font-size:18px;line-height:1;padding:2px')}
+              >×</button>
+            </div>
+            <div style={{ ...css('flex:1;padding:8px'), overflowY: 'auto' }}>
+              {unclassified.map((t) => {
+                const p = proj(t.projectId)
+                const sug = suggest(t)
+                const sugMeta = QMETA[sug]
+                return (
+                  <div key={t.id} style={css('padding:12px 14px;border-radius:11px')}>
+                    <div style={css('display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px')}>
+                      <button
+                        onClick={() => updateTask(t.id, { done: true, lastMoved: 0 })}
+                        title="Marcar completada"
+                        style={css('flex-shrink:0;margin-top:2px;width:22px;height:22px;border-radius:6px;border:1.5px solid #CFC4B0;background:#fff;cursor:pointer;padding:0')}
+                      />
+                      <div style={css('flex:1;min-width:0')}>
+                        <div style={css("font:600 14px 'Hanken Grotesk';color:#2B2520;margin-bottom:5px")}>
+                          {t.title}
+                        </div>
+                        <div style={css('display:flex;align-items:center;gap:6px;flex-wrap:wrap')}>
+                          <span style={chip(p.color, p.tint)}>{p.name}</span>
+                          <span style={assigneeStyle(t.assignee)}>{t.assignee}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => { setEditingTaskId(t.id); setShowUnclassified(false) }}
+                        title="Editar tarea completa"
+                        style={css('flex-shrink:0;width:28px;height:28px;border:1px solid #E9E1D3;border-radius:8px;background:#fff;color:#A89B86;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0')}
+                      >
+                        <EditIcon />
+                      </button>
+                    </div>
+                    <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+                      <button
+                        onClick={() => { updateTask(t.id, { quadrant: sug }); flash('Clasificación confirmada') }}
+                        style={css(`display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1.5px solid ${sugMeta.accent};background:${sugMeta.bg};color:${sugMeta.accent};font:600 12.5px 'Hanken Grotesk';cursor:pointer`)}
+                      >
+                        Confirmar sugerencia: {sugMeta.label}
+                      </button>
+                      <span style={css("font:500 11px 'JetBrains Mono';color:#C4B79F")}>o elige:</span>
+                      {QUAD_ORDER.filter((k) => k !== sug).map((k) => {
+                        const m = QMETA[k]
+                        return (
+                          <button
+                            key={k}
+                            onClick={() => { updateTask(t.id, { quadrant: k }); flash('Clasificación confirmada') }}
+                            style={css(`padding:6px 11px;border-radius:8px;border:1px solid ${m.accent}55;background:#fff;color:${m.accent};font:600 12px 'Hanken Grotesk';cursor:pointer`)}
+                          >
+                            {m.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {ghost && ghostTask && ghostProj && (
         <div

@@ -15,6 +15,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Claude Code: config y estado local de la sesión (no pertenece al repo público)
+.claude/
+
 # Local env
 .env
 .env.local

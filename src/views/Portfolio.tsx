@@ -164,7 +164,9 @@ export function Portfolio() {
                 <div style={css('flex:1;min-width:0')}>
                   <div style={css('display:flex;align-items:center;gap:9px;flex-wrap:wrap')}>
                     <span style={css("font:700 16px 'Hanken Grotesk';color:#2B2520")}>{p.name}</span>
-                    {hasStar && <span style={css('color:#D99A1C;font-size:14px')}>★</span>}
+                    {hasStar && (
+                      <span title="Tiene tareas con seguimiento personal" style={css('color:#D99A1C;font-size:14px')}>★</span>
+                    )}
                   </div>
                   <div style={css('display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap')}>
                     <span style={css("font:600 10.5px 'JetBrains Mono';letter-spacing:.3px;text-transform:uppercase;color:#A89B86")}>
@@ -176,6 +178,21 @@ export function Portfolio() {
                     </span>
                   </div>
                 </div>
+                <button
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    updateProject(p.id, { starred: !p.starred })
+                  }}
+                  title={p.starred ? 'Quitar proyecto destacado' : 'Marcar como proyecto destacado'}
+                  style={css(
+                    `flex-shrink:0;width:30px;height:30px;border-radius:9px;border:none;cursor:pointer;font-size:14px;background:${
+                      p.starred ? '#E0A82E' : '#F0E8DA'
+                    };color:${p.starred ? '#fff' : '#C4B79F'}`,
+                  )}
+                >
+                  ★
+                </button>
                 <button
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {

@@ -33,8 +33,17 @@ type DragState =
       ow: number; oh: number
     }
 
+function EditIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  )
+}
+
 export function Whiteboard({ isMobile }: { isMobile: boolean }) {
-  const { data, updateTask, updateData, setView } = useStore()
+  const { data, updateTask, updateData, setView, setEditingTaskId } = useStore()
   const [dragState, setDragState] = useState<DragState | null>(null)
   const dragRef = useRef<DragState | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
@@ -421,7 +430,25 @@ export function Whiteboard({ isMobile }: { isMobile: boolean }) {
               >
                 <div style={css('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
                   <span style={chip(p.color, p.tint)}>{p.name}</span>
-                  {t.starred && <span style={starBadge()}>★</span>}
+                  <div style={css('display:flex;align-items:center;gap:6px;flex-shrink:0')}>
+                    {t.starred && <span style={starBadge()}>★</span>}
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); updateTask(t.id, { done: !t.done, lastMoved: 0 }) }}
+                      title={t.done ? 'Marcar pendiente' : 'Marcar completada'}
+                      style={css(`width:22px;height:22px;border-radius:6px;border:1.5px solid ${t.done ? '#2E7D6B' : '#CFC4B0'};background:${t.done ? '#2E7D6B' : '#FAF6EE'};color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-size:12px`)}
+                    >
+                      {t.done && '✓'}
+                    </button>
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); setEditingTaskId(t.id) }}
+                      title="Editar tarea"
+                      style={css('width:22px;height:22px;border:1px solid #E9E1D3;border-radius:6px;background:#FAF6EE;color:#A89B86;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0')}
+                    >
+                      <EditIcon />
+                    </button>
+                  </div>
                 </div>
                 <div style={css("font:600 14.5px 'Hanken Grotesk';color:#2B2520;line-height:1.3")}>
                   {t.title}

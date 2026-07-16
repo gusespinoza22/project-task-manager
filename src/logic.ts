@@ -36,6 +36,34 @@ export function isStalled(t: Task): boolean {
   return !t.done && t.lastMoved >= STALL_THRESHOLD
 }
 
+/** Monday 00:00 (local time) of the week containing `ts`. */
+export function weekStart(ts: number): Date {
+  const d = new Date(ts)
+  d.setHours(0, 0, 0, 0)
+  const day = d.getDay() // 0=Sun .. 6=Sat
+  const diffToMonday = (day + 6) % 7 // Mon->0, Tue->1, ..., Sun->6
+  d.setDate(d.getDate() - diffToMonday)
+  return d
+}
+
+/** Stable key identifying a Monday–Sunday week (the Monday's date, YYYY-MM-DD). */
+export function weekKey(ts: number): string {
+  return weekStart(ts).toISOString().slice(0, 10)
+}
+
+/** Human label for the Monday–Sunday week containing `ts`, e.g. "6 – 12 jul". */
+export function weekLabel(ts: number): string {
+  const start = weekStart(ts)
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  const fmt = (d: Date) => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+  return `${fmt(start)} – ${fmt(end)}`
+}
+
+export function isThisWeek(ts: number): boolean {
+  return weekKey(ts) === weekKey(Date.now())
+}
+
 export function hexTint(hex: string): string {
   const n = parseInt(hex.slice(1), 16)
   const r = (n >> 16) & 255

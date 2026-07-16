@@ -10,8 +10,17 @@ interface Ghost {
   idx: number | null
 }
 
+function EditIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  )
+}
+
 export function FirstThing() {
-  const { data, updateData } = useStore()
+  const { data, updateData, updateTask, setEditingTaskId } = useStore()
   const [dragId, setDragId] = useState<string | null>(null)
   const [ghost, setGhost] = useState<Ghost | null>(null)
   const idxRef = useRef<number | null>(null)
@@ -22,12 +31,12 @@ export function FirstThing() {
     updateData((d) => {
       const t = d.tasks.find((x) => x.id === id)!
       if (t.firstThing) {
-        return { ...d, tasks: d.tasks.map((x) => (x.id === id ? { ...x, firstThing: false } : x)) }
+        return { ...d, tasks: d.tasks.map((x) => (x.id === id ? { ...x, firstThing: false, updatedAt: Date.now() } : x)) }
       }
       const max = Math.max(0, ...d.tasks.filter((x) => x.firstThing).map((x) => x.ftOrder))
       return {
         ...d,
-        tasks: d.tasks.map((x) => (x.id === id ? { ...x, firstThing: true, ftOrder: max + 1, lastMoved: 0 } : x)),
+        tasks: d.tasks.map((x) => (x.id === id ? { ...x, firstThing: true, ftOrder: max + 1, lastMoved: 0, updatedAt: Date.now() } : x)),
       }
     })
   }
@@ -154,7 +163,22 @@ export function FirstThing() {
                     </div>
                     <button
                       onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => updateTask(t.id, { done: true, lastMoved: 0 })}
+                      title="Marcar completada"
+                      style={css('flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1.5px solid #CFC4B0;background:#fff;cursor:pointer;padding:0')}
+                    />
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => setEditingTaskId(t.id)}
+                      title="Editar tarea"
+                      style={css('flex-shrink:0;width:30px;height:30px;border:1px solid #E7DECF;border-radius:8px;background:#fff;color:#B5A892;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0')}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => toggleFt(t.id)}
+                      title="Quitar de Lo primero"
                       style={css('flex-shrink:0;width:30px;height:30px;border:1px solid #E7DECF;border-radius:8px;background:#fff;color:#B5A892;cursor:pointer;font-size:15px;line-height:1')}
                     >
                       ×
@@ -197,33 +221,50 @@ export function FirstThing() {
             const p = proj(t.projectId)
             const q = QMETA[eff(t)]
             return (
-              <button
+              <div
                 key={t.id}
-                onClick={() => toggleFt(t.id)}
-                style={css('display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:11px 15px;background:#fff;border:1px solid #ECE3D3;border-radius:11px;cursor:pointer')}
+                style={css('display:flex;align-items:center;gap:9px;width:100%;padding:11px 15px;background:#fff;border:1px solid #ECE3D3;border-radius:11px')}
               >
-                <span style={css('font-size:18px;color:#C9BCA4;line-height:1;flex-shrink:0')}>+</span>
-                <span style={css("flex:1;min-width:0;font:600 14px 'Hanken Grotesk';color:#2B2520")}>{t.title}</span>
-                {/* Quadrant badge */}
-                <span style={{
-                  flexShrink: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '3px 8px',
-                  borderRadius: 6,
-                  background: q.bg,
-                  border: `1px solid ${q.accent}33`,
-                  font: "600 11px 'JetBrains Mono'",
-                  color: q.accent,
-                  whiteSpace: 'nowrap',
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: q.accent, display: 'inline-block', flexShrink: 0 }} />
-                  {q.label}
-                </span>
-                <span style={chip(p.color, p.tint)}>{p.name}</span>
-                <span style={assigneeStyle(t.assignee)}>{t.assignee}</span>
-              </button>
+                <button
+                  onClick={() => toggleFt(t.id)}
+                  title="Agregar a Lo primero"
+                  style={css('flex:1;min-width:0;display:flex;align-items:center;gap:9px;text-align:left;background:none;border:none;padding:0;cursor:pointer')}
+                >
+                  <span style={css('font-size:18px;color:#C9BCA4;line-height:1;flex-shrink:0')}>+</span>
+                  <span style={css("flex:1;min-width:0;font:600 14px 'Hanken Grotesk';color:#2B2520")}>{t.title}</span>
+                  {/* Quadrant badge */}
+                  <span style={{
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    background: q.bg,
+                    border: `1px solid ${q.accent}33`,
+                    font: "600 11px 'JetBrains Mono'",
+                    color: q.accent,
+                    whiteSpace: 'nowrap',
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: q.accent, display: 'inline-block', flexShrink: 0 }} />
+                    {q.label}
+                  </span>
+                  <span style={chip(p.color, p.tint)}>{p.name}</span>
+                  <span style={assigneeStyle(t.assignee)}>{t.assignee}</span>
+                </button>
+                <button
+                  onClick={() => updateTask(t.id, { done: true, lastMoved: 0 })}
+                  title="Marcar completada"
+                  style={css('flex-shrink:0;width:26px;height:26px;border-radius:7px;border:1.5px solid #CFC4B0;background:#fff;cursor:pointer;padding:0')}
+                />
+                <button
+                  onClick={() => setEditingTaskId(t.id)}
+                  title="Editar tarea"
+                  style={css('flex-shrink:0;width:26px;height:26px;border:1px solid #E9E1D3;border-radius:7px;background:#FAF6EE;color:#A89B86;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0')}
+                >
+                  <EditIcon />
+                </button>
+              </div>
             )
           })}
         </div>

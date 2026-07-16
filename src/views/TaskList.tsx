@@ -2,14 +2,17 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { QMETA } from '../constants'
 import { assigneeStyle, chip, css, eff } from '../logic'
+import { TaskTimeline } from '../components/TaskTimeline'
 
 type SortKey = 'priority' | 'project' | 'assignee' | 'status' | 'starred'
 type StatusFilter = 'all' | 'pending' | 'done'
+type Tab = 'list' | 'timeline'
 
 const QUAD_RANK: Record<string, number> = { do: 0, schedule: 1, delegate: 2, eliminate: 3 }
 
 export function TaskList() {
   const { data, setEditingTaskId, updateTask } = useStore()
+  const [tab, setTab] = useState<Tab>('list')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortKey>('priority')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending')
@@ -81,12 +84,12 @@ export function TaskList() {
             {tasks.length !== totalAll && (
               <><span style={css("font:600 13px 'JetBrains Mono';color:#C75D3C")}>{tasks.length}</span> en vista · </>
             )}
-            clic en el título para editar
+            {tab === 'list' ? 'clic en el título para editar' : 'qué se completó y qué se tocó, semana a semana'}
           </p>
         </div>
 
         {/* Search */}
-        <div style={css('position:relative')}>
+        {tab === 'list' && <div style={css('position:relative')}>
           <svg style={css('position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none')} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A89B86" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -103,9 +106,28 @@ export function TaskList() {
               style={css('position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#A89B86;font-size:17px;line-height:1;padding:2px')}
             >×</button>
           )}
-        </div>
+        </div>}
       </div>
 
+      {/* ── Tab switcher ── */}
+      <div style={css('display:inline-flex;padding:3px;background:#EBE2D2;border-radius:11px;gap:2px;margin-bottom:16px')}>
+        <button
+          onClick={() => setTab('list')}
+          style={css(`padding:7px 16px;border:none;border-radius:8px;font:600 13px 'Hanken Grotesk';cursor:pointer;background:${tab === 'list' ? '#fff' : 'transparent'};color:${tab === 'list' ? '#2B2520' : '#8C8275'};box-shadow:${tab === 'list' ? '0 1px 3px rgba(43,37,32,.1)' : 'none'}`)}
+        >
+          Lista
+        </button>
+        <button
+          onClick={() => setTab('timeline')}
+          style={css(`padding:7px 16px;border:none;border-radius:8px;font:600 13px 'Hanken Grotesk';cursor:pointer;background:${tab === 'timeline' ? '#fff' : 'transparent'};color:${tab === 'timeline' ? '#2B2520' : '#8C8275'};box-shadow:${tab === 'timeline' ? '0 1px 3px rgba(43,37,32,.1)' : 'none'}`)}
+        >
+          Cronología
+        </button>
+      </div>
+
+      {tab === 'timeline' && <TaskTimeline />}
+
+      {tab === 'list' && <>
       {/* ── Filter + Sort bar ── */}
       <div style={css('display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap')}>
         {/* Status filter segmented */}
@@ -239,6 +261,7 @@ export function TaskList() {
           })
         )}
       </div>
+      </>}
     </section>
   )
 }
